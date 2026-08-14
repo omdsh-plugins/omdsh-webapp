@@ -1,0 +1,36 @@
+{
+  "name": "@wanghao9610/omdsh-webapp",
+  "description": "The harness web UI as a macOS application: DSH Web.app boots a profile from the Dock instead of a terminal, raises the tab already showing it when reached, and stops the server when it quits",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wanghao9610/omdsh-webapp.git"
+  },
+  "packageManager": "pnpm@11.7.0",
+  "engines": {
+    "node": "^22.19.0 || >=24.0.0"
+  },
+  "os": [
+    "darwin"
+  ],
+  "exports": {
+    ".": "./src/index.ts",
+    "./package.json": "./package.json"
+  },
+  "scripts": {
+    "package:mac": "tsx scripts/package-macos-app.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "icon:render": "rsvg-convert -w 1024 -h 1024 assets/macos-app-icon.svg -o assets/macos-app-icon.png",
+    "clean": "rm -rf dist-macos *.tsbuildinfo"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.0",
+    "tsx": "^4.22.4",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.8"
+  }
+}

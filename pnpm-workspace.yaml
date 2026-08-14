@@ -1,0 +1,5 @@
+# pnpm 10+ blocks any dependency shipping an install/build script until it is
+# explicitly reviewed here. Deny by default; allow only what this packager needs.
+allowBuilds:
+  # Reached through tsx, which runs the packaging script and the specs.
+  esbuild: true
