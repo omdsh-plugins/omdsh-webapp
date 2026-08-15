@@ -159,8 +159,31 @@ while [ "$attempt" -lt ${String(URL_WAIT_ATTEMPTS)} ]; do
 done
 
 if [ -z "$url" ]; then
-  alert "The $PROFILE profile did not start serving. See $LOG"
+  # Still running but never said it was serving: nothing is going to use it.
+  kill "$child" 2>/dev/null
   wait "$child" 2>/dev/null
+  # A profile that could not take its port is usually losing it to a session
+  # already serving — a dsh started from a terminal, or a copy of this app
+  # under another home. Reaching that session is what the launch asked for.
+  # Only a port held by something that answers nothing is a failure.
+  taken=$(/usr/bin/grep -m1 -o 'EADDRINUSE: address already in use [^ ]*' "$LOG" 2>/dev/null)
+  if [ -n "$taken" ]; then
+    address="\${taken##* }"
+    host="\${address%:*}"
+    port="\${address##*:}"
+    case "$host" in
+      0.0.0.0|::|'[::]') host=127.0.0.1 ;;
+      *:*) host="[$host]" ;;
+    esac
+    existing="http://$host:$port"
+    if /usr/bin/curl -fsS --max-time 2 -o /dev/null "$existing"; then
+      focus_or_open "$existing"
+      exit 0
+    fi
+    alert "Port $port is held by something that is not serving. Stop it, or rebuild this app on another port. See $LOG"
+    exit 1
+  fi
+  alert "The $PROFILE profile did not start serving. See $LOG"
   exit 1
 fi
 

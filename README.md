@@ -15,8 +15,14 @@ showing it rather than opening another.
 |---|---|
 | Launch it | boots `dsh --profile web`, waits for the URL it prints, and opens that URL |
 | Reach it again (Dock click, Command-Tab, any activation) | raises the tab already showing that URL, in a browser that is already running |
-| Launch it while it is already serving | surfaces the running session instead of starting a second one |
-| Quit it | stops the server, so no port is left held |
+| Launch it while its own session is serving | surfaces that session instead of starting a second one |
+| Launch it while something else holds the port — a `dsh web` left running in a terminal, or a copy of this app under another home | surfaces the session on that port and steps aside, because reaching it is what the click asked for |
+| Quit it | stops the server it started, so no port is left held |
+
+A launch that only surfaced someone else's session owns nothing, so it exits
+right away: the Dock tile appears and goes. Quitting stops a server only when
+this application is the one that started it. A port held by something that is
+not serving at all is the one case that reports a failure, with the log to read.
 
 Each run writes `~/Library/Logs/DSH Web/web.log`, and records the URL it is
 serving beside it. Only a browser that is already running is ever asked for its
