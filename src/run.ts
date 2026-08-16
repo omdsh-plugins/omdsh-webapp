@@ -1,4 +1,4 @@
-/** Running the macOS build tools the packager leans on. */
+/** Running the platform build tools the packagers lean on. */
 
 import { spawnSync } from 'node:child_process'
 

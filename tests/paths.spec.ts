@@ -1,6 +1,6 @@
 import { chmod, mkdir, mkdtemp, rm, symlink, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { delimiter, join } from 'node:path'
 import { afterAll, describe, expect, it } from 'vitest'
 import { SYSTEM_PATH_DIRS, launchPath, resolveOnPath, stableNodePath, stableSearchPath } from '../src/paths.ts'
 
@@ -13,19 +13,20 @@ describe('resolveOnPath', () => {
     const second = join(staging, 'second')
     await mkdir(first, { recursive: true })
     await mkdir(second, { recursive: true })
-    // A file of the right name that cannot be run is not the answer.
+    const executable = process.platform === 'win32' ? 'dsh.cmd' : 'dsh'
+    // Unix rejects a non-executable first match; Windows resolves PATHEXT names.
     await writeFile(join(first, 'dsh'), '')
     await chmod(join(first, 'dsh'), 0o644)
-    await writeFile(join(second, 'dsh'), '')
-    await chmod(join(second, 'dsh'), 0o755)
+    await writeFile(join(second, executable), '')
+    await chmod(join(second, executable), 0o755)
 
-    expect(resolveOnPath('dsh', [first, second].join(':'))).toBe(join(second, 'dsh'))
-    expect(resolveOnPath('dsh', ['', join(staging, 'absent')].join(':'))).toBeUndefined()
+    expect(resolveOnPath('dsh', [first, second].join(delimiter))).toBe(join(second, executable))
+    expect(resolveOnPath('dsh', ['', join(staging, 'absent')].join(delimiter))).toBeUndefined()
   })
 })
 
 describe('stableNodePath', () => {
-  it('prefers a PATH entry that resolves to the running binary over the binary itself', async () => {
+  it.skipIf(process.platform === 'win32')('prefers a PATH entry that resolves to the running binary over the binary itself', async () => {
     const real = join(staging, 'versioned')
     const alias = join(staging, 'alias')
     await mkdir(real, { recursive: true })
@@ -48,19 +49,28 @@ describe('stableNodePath', () => {
 
 describe('stableSearchPath', () => {
   it('drops what the build was handed but the bundle would outlive', () => {
-    const inherited = [
+    const inherited = process.platform === 'win32' ? [
+      String.raw`C:\project\node_modules\.bin`,
+      String.raw`C:\pnpm\store\v11\links\@\pnpm\11.7.0\bin`,
+      String.raw`C:\Program Files\nodejs`,
+      '',
+      String.raw`C:\Windows\System32`,
+    ] : [
       '/Users/me/project/node_modules/.bin',
       '/Users/me/Library/pnpm/store/v11/links/@/pnpm/11.7.0/583f18d/bin',
       '/opt/homebrew/bin',
       '',
       '/usr/bin',
-    ].join(':')
+    ]
 
-    expect(stableSearchPath(inherited)).toBe('/opt/homebrew/bin:/usr/bin')
+    expect(stableSearchPath(inherited.join(delimiter))).toBe(inherited.slice(2).filter(Boolean).join(delimiter))
   })
 
   it('keeps an ordinary directory that merely mentions a store', () => {
-    expect(stableSearchPath('/opt/store/bin:/usr/bin')).toBe('/opt/store/bin:/usr/bin')
+    const ordinary = process.platform === 'win32'
+      ? [String.raw`C:\store\bin`, String.raw`C:\Windows\System32`]
+      : ['/opt/store/bin', '/usr/bin']
+    expect(stableSearchPath(ordinary.join(delimiter))).toBe(ordinary.join(delimiter))
   })
 })
 

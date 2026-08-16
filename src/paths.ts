@@ -6,7 +6,7 @@
  */
 
 import { accessSync, constants, realpathSync } from 'node:fs'
-import { delimiter, dirname, join } from 'node:path'
+import { delimiter, dirname, extname, join } from 'node:path'
 
 /** Directories the launcher's `PATH` always ends with, after the resolved tools. */
 export const SYSTEM_PATH_DIRS = ['/usr/local/bin', '/usr/bin', '/bin', '/usr/sbin', '/sbin'] as const
@@ -17,7 +17,10 @@ export const SYSTEM_PATH_DIRS = ['/usr/local/bin', '/usr/bin', '/bin', '/usr/sbi
  * runs its own binary from. Both are gone the moment the build is, so a bundle
  * that baked one would launch into a path that no longer exists.
  */
-const EPHEMERAL_PATH_ENTRIES = [/\/node_modules\/\.bin\/?$/, /\/store\/v\d+\/links\//]
+const EPHEMERAL_PATH_ENTRIES = [
+  /[\\/]node_modules[\\/]\.bin[\\/]?$/,
+  /[\\/]store[\\/]v\d+[\\/]links[\\/]/,
+]
 
 /**
  * Drop the entries this build was handed but the built bundle cannot rely on.
@@ -38,15 +41,25 @@ export function stableSearchPath(searchPath: string): string {
  * @param searchPath - a `PATH`-shaped string.
  * @returns the absolute path, or `undefined` when no entry holds it.
  */
-export function resolveOnPath(command: string, searchPath: string): string | undefined {
+export function resolveOnPath(
+  command: string,
+  searchPath: string,
+  platform = process.platform,
+  pathExt = process.env.PATHEXT ?? '.COM;.EXE;.BAT;.CMD',
+): string | undefined {
+  const names = platform === 'win32' && extname(command) === ''
+    ? pathExt.split(';').filter((extension) => extension !== '').map((extension) => `${command}${extension.toLowerCase()}`)
+    : [command]
   for (const directory of searchPath.split(delimiter)) {
     if (directory === '') continue
-    const candidate = join(directory, command)
-    try {
-      accessSync(candidate, constants.X_OK)
-      return candidate
-    } catch {
-      // A PATH entry need not exist or hold this command; the next one decides.
+    for (const name of names) {
+      const candidate = join(directory, name)
+      try {
+        accessSync(candidate, platform === 'win32' ? constants.F_OK : constants.X_OK)
+        return candidate
+      } catch {
+        // A PATH entry need not exist or hold this command; the next one decides.
+      }
     }
   }
   return undefined
@@ -66,11 +79,12 @@ export function resolveOnPath(command: string, searchPath: string): string | und
  * @param searchPath - a `PATH`-shaped string to look for an alias in.
  * @returns the absolute Node path.
  */
-export function stableNodePath(execPath: string, searchPath: string): string {
+export function stableNodePath(execPath: string, searchPath: string, platform = process.platform): string {
   const real = realpathSync(execPath)
+  const executable = platform === 'win32' ? 'node.exe' : 'node'
   for (const directory of searchPath.split(delimiter)) {
     if (directory === '') continue
-    const candidate = join(directory, 'node')
+    const candidate = join(directory, executable)
     try {
       if (realpathSync(candidate) === real) return candidate
     } catch {
@@ -90,14 +104,25 @@ export function stableNodePath(execPath: string, searchPath: string): string {
  * @param tools - absolute paths of the executables the bundle runs.
  * @returns the deduplicated directory list.
  */
-export function launchPath(tools: readonly string[]): string[] {
+export function launchPath(tools: readonly string[], systemDirectories: readonly string[] = SYSTEM_PATH_DIRS): string[] {
   const directories: string[] = []
   for (const tool of tools) {
     const directory = dirname(tool)
     if (!directories.includes(directory)) directories.push(directory)
   }
-  for (const directory of SYSTEM_PATH_DIRS) {
+  for (const directory of systemDirectories) {
     if (!directories.includes(directory)) directories.push(directory)
   }
   return directories
+}
+
+/** System search-path entries needed by a GUI launch on Windows. */
+export function windowsSystemPathDirs(windowsDirectory = process.env.WINDIR): string[] {
+  if (windowsDirectory === undefined || windowsDirectory === '') return []
+  return [
+    join(windowsDirectory, 'System32'),
+    windowsDirectory,
+    join(windowsDirectory, 'System32', 'Wbem'),
+    join(windowsDirectory, 'System32', 'WindowsPowerShell', 'v1.0'),
+  ]
 }
