@@ -103,7 +103,7 @@ describe('shellQuote', () => {
 })
 
 describe('launcherScript', () => {
-  it('parses as the system shell, which is bash 3.2', async () => {
+  it.skipIf(process.platform !== 'darwin')('parses as the system shell, which is bash 3.2', async () => {
     const path = join(staging, 'syntax-check')
     await writeFile(path, script({ webArgs: ['--port', '8080'], dshHome: '/tmp/scratch home' }))
     const result = spawnSync('/bin/bash', ['-n', path], { encoding: 'utf8' })
@@ -142,7 +142,7 @@ describe('launcherScript', () => {
   })
 })
 
-describe('a launch that cannot take its port', () => {
+describe.skipIf(process.platform !== 'darwin')('a launch that cannot take its port', () => {
   it('raises the session already holding it, which is what the launch asked for', async () => {
     const server = createServer((_request, response) => { response.writeHead(200); response.end('served') })
     await new Promise<void>((resolve) => { server.listen(0, '127.0.0.1', resolve) })
@@ -169,7 +169,7 @@ describe('a launch that cannot take its port', () => {
   }, 60_000)
 })
 
-describe('the focus mode the executable runs on every activation', () => {
+describe.skipIf(process.platform !== 'darwin')('the focus mode the executable runs on every activation', () => {
   it('starts nothing when no run has recorded a URL', async () => {
     const home = await mkdtemp(join(staging, 'home-'))
     const result = await runLauncher(script(), ['focus'], home)
