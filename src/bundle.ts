@@ -10,7 +10,7 @@ export const DEFAULT_APP_NAME = 'DSH Web'
  * to be stable and unique. LaunchServices resolves an application by this, so
  * two bundles wrapping two profiles need two ids or they answer for each other.
  */
-export const DEFAULT_BUNDLE_ID = 'com.wanghao9610.omdsh.webapp'
+export const DEFAULT_BUNDLE_ID = 'ai.deepseek.dsh.web'
 /** The bundle executable's filename, which is also the app's process name. */
 export const EXECUTABLE_NAME = 'dsh-web'
 /** The launch script, run by the executable from `Contents/Resources`. */

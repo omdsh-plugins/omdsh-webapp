@@ -1,5 +1,5 @@
 {
-  "name": "@wanghao9610/omdsh-webapp",
+  "name": "@omdsh-plugins/omdsh-webapp",
   "description": "The harness web UI as a macOS application: DSH Web.app boots a profile from the Dock instead of a terminal, raises the tab already showing it when reached, and stops the server when it quits",
   "version": "0.1.0",
   "private": true,
@@ -7,7 +7,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/wanghao9610/omdsh-webapp.git"
+    "url": "git+https://github.com/omdsh-plugins/omdsh-webapp.git"
   },
   "packageManager": "pnpm@11.7.0",
   "engines": {
