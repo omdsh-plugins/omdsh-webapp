@@ -1,4 +1,5 @@
 node_modules/
 dist-macos/
+dist-windows/
 *.tsbuildinfo
 .DS_Store

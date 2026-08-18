@@ -1,5 +1,5 @@
 /**
- * `dsh web` as a double-clickable macOS application.
+ * `dsh web` as a double-clickable macOS or Windows application.
  *
  * The bundle is a launcher, not a copy of the harness: it runs the `dsh`
  * launcher resolved at build time, under a `PATH` baked in beside it. Moving or
@@ -29,3 +29,20 @@ export {
 } from './launcher.ts'
 export { SYSTEM_PATH_DIRS, launchPath, resolveOnPath, stableNodePath, stableSearchPath } from './paths.ts'
 export { compileShim, shimSource } from './shim.ts'
+export {
+  buildWindowsApp,
+  DEFAULT_WINDOWS_APP_ID,
+  findWindowsCompiler,
+  windowsInstanceKey,
+  type WindowsBuildOptions,
+  type WindowsBuildResult,
+} from './windows-build.ts'
+export { writeWindowsIcon } from './windows-icon.ts'
+export {
+  csharpString,
+  powershellQuote,
+  windowsAssemblyVersion,
+  windowsLauncherSource,
+  windowsPowerShellCommand,
+  type WindowsLauncherOptions,
+} from './windows-launcher.ts'
